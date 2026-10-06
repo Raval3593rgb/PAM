@@ -13,19 +13,28 @@ class LoginScreen extends StatelessWidget {
         padding: const EdgeInsets.all(16),
         child: Column(
           children: [ 
-           TextField(
-            decoration: const InputDecoration(
+           const TextField(
+            decoration: InputDecoration(
               labelText: 'Email',
               ),
             ),
 
+            const SizedBox(height:16), 
+
             TextField(
             obscureText: true,
-              decoration: const InputDecoration(
+              decoration: InputDecoration(
                 labelText: 'Password',
                 ),
             ),
-        
+
+            const SizedBox(height:16),
+
+            FilledButton(
+              onPressed: () {
+            },
+            child: const Text('Sign In')
+            )
           ],
         ),
       ),
