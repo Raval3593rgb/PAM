@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import 'screens/login_screen.dart';
+import 'screens/pet_screen.dart';
+
 
 void main() {
   runApp(const MyApp());
@@ -16,7 +19,7 @@ class MyApp extends StatelessWidget {
 
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.lightGreen),
       ),
-      home: const MyHomePage(title: 'PetCare Home Page'),
+      home: const PetsScreen(),
     );
   }
 }
