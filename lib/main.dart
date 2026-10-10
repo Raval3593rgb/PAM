@@ -1,10 +1,14 @@
 import 'package:flutter/material.dart';
+
 import 'screens/login_screen.dart';
 import 'screens/pet_screen.dart';
 import 'screens/pet_details_screen.dart';
+import 'screens/pet_form_screen.dart';
+import 'screens/vet_visit_form_screen.dart';
+import 'screens/vaccination_calendar_screen.dart';
+import 'screens/profile_screen.dart';
+
 import 'data/mock_data.dart';
-
-
 void main() {
   runApp(const MyApp());
 }
@@ -21,7 +25,7 @@ class MyApp extends StatelessWidget {
 
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.lightGreen),
       ),
-      home: const PetsScreen(),
+      home: const ProfileScreen(),
     );
   }
 }
