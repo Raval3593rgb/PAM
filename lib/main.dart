@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'screens/login_screen.dart';
 import 'screens/pet_screen.dart';
+import 'screens/pet_details_screen.dart';
+import 'data/mock_data.dart';
 
 
 void main() {
