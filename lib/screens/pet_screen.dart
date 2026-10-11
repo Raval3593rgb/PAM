@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../widgets/pet_avatar.dart';
 import '../data/mock_data.dart';
 
 class PetsScreen extends StatelessWidget {
@@ -64,9 +65,7 @@ class PetsScreen extends StatelessWidget {
 
                 return Card(
                   child: ListTile(
-                    leading: const CircleAvatar(
-                      child: Icon(Icons.pets),
-                    ),
+                    leading: const PetAvatar(),
                     title: Text(pet.name),
                     subtitle: Text(
                       '${pet.species} · ${pet.birthDate}',

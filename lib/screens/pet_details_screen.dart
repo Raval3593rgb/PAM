@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
+
 import '../data/mock_data.dart';
+import '../widgets/pet_avatar.dart';
+import '../widgets/info_tile.dart';
 
 class PetDetailsScreen extends StatelessWidget {
   final Pet pet;
@@ -28,13 +31,9 @@ class PetDetailsScreen extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Center(
-              child: CircleAvatar(
+            const Center(
+              child: PetAvatar(
                 radius: 50,
-                child: const Icon(
-                  Icons.pets,
-                  size: 50,
-                ),
               ),
             ),
 
@@ -52,15 +51,16 @@ class PetDetailsScreen extends StatelessWidget {
             Card(
               child: Column(
                 children: [
-                  ListTile(
-                    leading: const Icon(Icons.pets),
-                    title: const Text('Species'),
-                    subtitle: Text(pet.species),
+                  InfoTile(
+                    icon: Icons.pets,
+                    title: 'Species',
+                    value: pet.species,
                   ),
-                  ListTile(
-                    leading: const Icon(Icons.cake),
-                    title: const Text('Birth date'),
-                    subtitle: Text(pet.birthDate),
+
+                  InfoTile(
+                    icon: Icons.cake,
+                    title: 'Birth date',
+                    value: pet.birthDate,
                   ),
                 ],
               ),
