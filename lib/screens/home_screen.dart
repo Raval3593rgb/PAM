@@ -1,13 +1,5 @@
 import 'package:flutter/material.dart';
-
-import '../data/mock_data.dart';
-import 'login_screen.dart';
-import 'pet_screen.dart';
-import 'pet_details_screen.dart';
-import 'pet_form_screen.dart';
-import 'vet_visit_form_screen.dart';
-import 'vaccination_calendar_screen.dart';
-import 'profile_screen.dart';
+import 'package:go_router/go_router.dart';
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
@@ -15,107 +7,51 @@ class HomeScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('PetCare'),
-      ),
+      appBar: AppBar(title: const Text('PetCare')),
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
+          const Icon(Icons.pets, size: 80, color: Colors.lightGreen),
+          const SizedBox(height: 16),
+          const Center(
+            child: Text(
+              'Welcome to PetCare',
+              style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+            ),
+          ),
+          const SizedBox(height: 24),
           FilledButton(
-            onPressed: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (_) => const LoginScreen(),
-                ),
-              );
-            },
+            onPressed: () => context.go('/login'),
             child: const Text('Login'),
           ),
-
           const SizedBox(height: 12),
-
           FilledButton(
-            onPressed: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (_) => const PetsScreen(),
-                ),
-              );
-            },
+            onPressed: () => context.push('/pets'),
             child: const Text('My Pets'),
           ),
-
           const SizedBox(height: 12),
-
           FilledButton(
-            onPressed: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (_) => PetDetailsScreen(
-                    pet: mockPets[0],
-                  ),
-                ),
-              );
-            },
+            onPressed: () => context.push('/pets/1'),
             child: const Text('Pet Details'),
           ),
-
           const SizedBox(height: 12),
-
           FilledButton(
-            onPressed: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (_) => const PetFormScreen(),
-                ),
-              );
-            },
+            onPressed: () => context.push('/pets/new'),
             child: const Text('Add Pet'),
           ),
-
           const SizedBox(height: 12),
-
           FilledButton(
-            onPressed: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (_) => const VetVisitFormScreen(),
-                ),
-              );
-            },
+            onPressed: () => context.push('/visits/new'),
             child: const Text('Vet Visit'),
           ),
-
           const SizedBox(height: 12),
-
           FilledButton(
-            onPressed: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (_) => const VaccinationCalendarScreen(),
-                ),
-              );
-            },
+            onPressed: () => context.push('/vaccinations'),
             child: const Text('Vaccination Calendar'),
           ),
-
           const SizedBox(height: 12),
-
           FilledButton(
-            onPressed: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (_) => const ProfileScreen(),
-                ),
-              );
-            },
+            onPressed: () => context.push('/profile'),
             child: const Text('Profile'),
           ),
         ],
