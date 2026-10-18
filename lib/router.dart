@@ -2,7 +2,6 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
-import 'data/mock_data.dart';
 import 'screens/login_screen.dart';
 import 'screens/pet_screen.dart';
 import 'screens/pet_details_screen.dart';
@@ -15,28 +14,21 @@ import 'widgets/app_shell.dart';
 final GoRouter appRouter = GoRouter(
   initialLocation: '/login',
   routes: [
-    // Login находится вне нижней панели.
     GoRoute(
       path: '/login',
       builder: (context, state) => const LoginScreen(),
     ),
-
     StatefulShellRoute.indexedStack(
       builder: (context, state, navigationShell) {
-        return AppShell(
-          navigationShell: navigationShell,
-        );
+        return AppShell(navigationShell: navigationShell);
       },
       branches: [
-        // Вкладка 1: питомцы.
         StatefulShellBranch(
           routes: [
             GoRoute(
               path: '/pets',
-              builder: (context, state) =>
-                  const PetsScreen(),
+              builder: (context, state) => const PetsScreen(),
               routes: [
-                // Фиксированный маршрут перед :id.
                 GoRoute(
                   path: 'new',
                   builder: (context, state) =>
@@ -49,26 +41,15 @@ final GoRouter appRouter = GoRouter(
                       state.pathParameters['id'] ?? '',
                     );
 
-                    Pet? selectedPet;
-
-                    for (final pet in mockPets) {
-                      if (pet.id == id) {
-                        selectedPet = pet;
-                        break;
-                      }
-                    }
-
-                    if (selectedPet == null) {
+                    if (id == null) {
                       return const Scaffold(
                         body: Center(
-                          child: Text('Pet not found'),
+                          child: Text('Invalid pet ID'),
                         ),
                       );
                     }
 
-                    return PetDetailsScreen(
-                      pet: selectedPet,
-                    );
+                    return PetDetailsScreen(id: id);
                   },
                   routes: [
                     GoRoute(
@@ -82,8 +63,6 @@ final GoRouter appRouter = GoRouter(
             ),
           ],
         ),
-
-        // Вкладка 2: календарь вакцинаций.
         StatefulShellBranch(
           routes: [
             GoRoute(
@@ -93,8 +72,6 @@ final GoRouter appRouter = GoRouter(
             ),
           ],
         ),
-
-        // Вкладка 3: профиль.
         StatefulShellBranch(
           routes: [
             GoRoute(

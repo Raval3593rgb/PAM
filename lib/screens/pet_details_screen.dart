@@ -7,21 +7,39 @@ import '../widgets/pet_avatar.dart';
 import '../widgets/info_tile.dart';
 
 class PetDetailsScreen extends StatelessWidget {
-  final Pet pet;
+  final int id;
 
   const PetDetailsScreen({
     super.key,
-    required this.pet,
+    required this.id,
   });
 
   @override
   Widget build(BuildContext context) {
+    Pet? pet;
+
+    for (final item in mockPets) {
+      if (item.id == id) {
+        pet = item;
+        break;
+      }
+    }
+
+    if (pet == null) {
+      return Scaffold(
+        appBar: AppBar(title: const Text('Pet not found')),
+        body: const Center(
+          child: Text('This pet does not exist'),
+        ),
+      );
+    }
+
     final visits = mockVetVisits
-        .where((visit) => visit.petId == pet.id)
+        .where((visit) => visit.petId == id)
         .toList();
 
     final vaccinations = mockVaccinations
-        .where((vaccination) => vaccination.petId == pet.id)
+        .where((vaccination) => vaccination.petId == id)
         .toList();
 
     return Scaffold(
@@ -36,9 +54,7 @@ class PetDetailsScreen extends StatelessWidget {
           Center(
             child: Text(
               pet.name,
-              style: Theme.of(context)
-                  .textTheme
-                  .headlineMedium,
+              style: Theme.of(context).textTheme.headlineMedium,
             ),
           ),
           const SizedBox(height: 16),
@@ -60,22 +76,17 @@ class PetDetailsScreen extends StatelessWidget {
           ),
           const SizedBox(height: 24),
           Row(
-            mainAxisAlignment:
-                MainAxisAlignment.spaceBetween,
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(
                 'Vet Visits',
-                style: Theme.of(context)
-                    .textTheme
-                    .titleLarge,
+                style: Theme.of(context).textTheme.titleLarge,
               ),
               IconButton(
                 icon: const Icon(Icons.add),
                 tooltip: 'Add Vet Visit',
                 onPressed: () {
-                  context.push(
-                    '/pets/${pet.id}/visits/new',
-                  );
+                  context.push('/pets/$id/visits/new');
                 },
               ),
             ],
@@ -86,9 +97,7 @@ class PetDetailsScreen extends StatelessWidget {
             ...visits.map(
               (visit) => Card(
                 child: ListTile(
-                  leading: const Icon(
-                    Icons.medical_services,
-                  ),
+                  leading: const Icon(Icons.medical_services),
                   title: Text(visit.reason),
                   subtitle: Text(
                     '${visit.date}\n'
@@ -101,9 +110,7 @@ class PetDetailsScreen extends StatelessWidget {
           const SizedBox(height: 24),
           Text(
             'Vaccinations',
-            style: Theme.of(context)
-                .textTheme
-                .titleLarge,
+            style: Theme.of(context).textTheme.titleLarge,
           ),
           const SizedBox(height: 8),
           if (vaccinations.isEmpty)
