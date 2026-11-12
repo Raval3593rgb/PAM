@@ -1,11 +1,20 @@
 
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:provider/provider.dart';
 
-import '../data/mock_data.dart';
+import '../data/repositories/mock_pet_repository.dart';
+import '../models/pet_model.dart';
 
-class ProfileScreen extends StatelessWidget {
+class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
+
+  @override
+  State<ProfileScreen> createState() => _ProfileScreenState();
+}
+
+class _ProfileScreenState extends State<ProfileScreen> {
+  bool _simulateError = false;
 
   Future<void> _confirmLogout(BuildContext context) async {
     final shouldLogout = await showDialog<bool>(
@@ -41,6 +50,8 @@ class ProfileScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final petModel = context.watch<PetModel>();
+
     return Scaffold(
       appBar: AppBar(
         title: const Text('Profile'),
@@ -58,7 +69,6 @@ class ProfileScreen extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 16),
-
           Center(
             child: Text(
               'PetCare User',
@@ -84,6 +94,7 @@ class ProfileScreen extends StatelessWidget {
               ],
             ),
           ),
+
           const SizedBox(height: 16),
 
           Card(
@@ -91,11 +102,34 @@ class ProfileScreen extends StatelessWidget {
               leading: const Icon(Icons.pets),
               title: const Text('Registered pets'),
               trailing: Text(
-                '${mockPets.length}',
+                '${petModel.pets.length}',
                 style: Theme.of(context).textTheme.titleLarge,
               ),
             ),
           ),
+
+          const SizedBox(height: 16),
+
+          Card(
+            child: SwitchListTile(
+              secondary: const Icon(Icons.wifi_off),
+              title: const Text('Simulate Network Error'),
+              subtitle: const Text(
+                'Test repository error handling',
+              ),
+              value: _simulateError,
+              onChanged: (value) {
+                setState(() {
+                  _simulateError = value;
+                });
+
+                context
+                    .read<MockPetRepository>()
+                    .simulateError = value;
+              },
+            ),
+          ),
+
           const SizedBox(height: 24),
 
           OutlinedButton.icon(

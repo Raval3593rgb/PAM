@@ -2,6 +2,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
+import 'package:provider/provider.dart';
+
+import '../data/mock_data.dart' show Pet;
+import '../models/pet_model.dart';
 
 class PetFormScreen extends StatefulWidget {
   const PetFormScreen({super.key});
@@ -17,6 +21,7 @@ class _PetFormScreenState extends State<PetFormScreen> {
   final _birthDateController = TextEditingController();
 
   String? _selectedSpecies;
+  bool _isSaving = false;
 
   @override
   void dispose() {
@@ -33,6 +38,7 @@ class _PetFormScreenState extends State<PetFormScreen> {
     final pattern = RegExp(
       r'^(\d{2})\.(\d{2})\.(\d{4})$',
     );
+
     final match = pattern.firstMatch(value.trim());
 
     if (match == null) {
@@ -58,15 +64,52 @@ class _PetFormScreenState extends State<PetFormScreen> {
     return null;
   }
 
-  void _savePet() {
+  Future<void> _savePet() async {
+    if (_isSaving) {
+      return;
+    }
+
     if (!_formKey.currentState!.validate()) {
+      return;
+    }
+
+    setState(() {
+      _isSaving = true;
+    });
+
+    final pet = Pet(
+      id: 0,
+      ownerId: 1,
+      name: _nameController.text.trim(),
+      species: _selectedSpecies!,
+      birthDate: _birthDateController.text.trim(),
+      photoUrl: '',
+    );
+
+    final error = await context.read<PetModel>().add(pet);
+
+    if (!mounted) {
+      return;
+    }
+
+    setState(() {
+      _isSaving = false;
+    });
+
+    if (error != null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(error),
+          backgroundColor: Colors.redAccent,
+        ),
+      );
       return;
     }
 
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(
-          'Pet ${_nameController.text.trim()} validated successfully',
+          'Pet ${pet.name} added successfully!',
         ),
       ),
     );
@@ -87,26 +130,34 @@ class _PetFormScreenState extends State<PetFormScreen> {
           children: [
             const CircleAvatar(
               radius: 50,
-              child: Icon(Icons.pets, size: 50),
+              child: Icon(
+                Icons.pets,
+                size: 50,
+              ),
             ),
             const SizedBox(height: 16),
+
             OutlinedButton.icon(
-              onPressed: () {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text(
-                      'Photo selection will be added in L5',
-                    ),
-                  ),
-                );
-              },
+              onPressed: _isSaving
+                  ? null
+                  : () {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text(
+                            'Photo selection will be added in L5',
+                          ),
+                        ),
+                      );
+                    },
               icon: const Icon(Icons.photo_camera),
               label: const Text('Choose photo'),
             ),
+
             const SizedBox(height: 20),
 
             TextFormField(
               controller: _nameController,
+              enabled: !_isSaving,
               textCapitalization: TextCapitalization.words,
               textInputAction: TextInputAction.next,
               decoration: const InputDecoration(
@@ -125,6 +176,7 @@ class _PetFormScreenState extends State<PetFormScreen> {
                 return null;
               },
             ),
+
             const SizedBox(height: 16),
 
             DropdownButtonFormField<String>(
@@ -155,11 +207,13 @@ class _PetFormScreenState extends State<PetFormScreen> {
                   child: Text('Other'),
                 ),
               ],
-              onChanged: (value) {
-                setState(() {
-                  _selectedSpecies = value;
-                });
-              },
+              onChanged: _isSaving
+                  ? null
+                  : (value) {
+                      setState(() {
+                        _selectedSpecies = value;
+                      });
+                    },
               validator: (value) {
                 if (value == null) {
                   return 'Please select a species';
@@ -167,10 +221,12 @@ class _PetFormScreenState extends State<PetFormScreen> {
                 return null;
               },
             ),
+
             const SizedBox(height: 16),
 
             TextFormField(
               controller: _birthDateController,
+              enabled: !_isSaving,
               keyboardType: TextInputType.datetime,
               textInputAction: TextInputAction.done,
               inputFormatters: [
@@ -187,12 +243,23 @@ class _PetFormScreenState extends State<PetFormScreen> {
               ),
               validator: _validateDate,
             ),
+
             const SizedBox(height: 24),
 
             FilledButton.icon(
-              onPressed: _savePet,
-              icon: const Icon(Icons.save),
-              label: const Text('Save Pet'),
+              onPressed: _isSaving ? null : _savePet,
+              icon: _isSaving
+                  ? const SizedBox(
+                      width: 20,
+                      height: 20,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                      ),
+                    )
+                  : const Icon(Icons.save),
+              label: Text(
+                _isSaving ? 'Saving...' : 'Save Pet',
+              ),
             ),
           ],
         ),

@@ -1,9 +1,31 @@
-import 'package:flutter/material.dart';
 
+import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+
+import 'data/repositories/mock_pet_repository.dart';
+import 'data/repositories/pet_repository.dart';
+import 'models/pet_model.dart';
 import 'router.dart';
 
 void main() {
-  runApp(const MyApp());
+  final petRepository = MockPetRepository();
+
+  runApp(
+    MultiProvider(
+      providers: [
+        Provider<MockPetRepository>.value(
+          value: petRepository,
+        ),
+        Provider<PetRepository>.value(
+          value: petRepository,
+        ),
+        ChangeNotifierProvider(
+          create: (_) => PetModel(petRepository)..load(),
+        ),
+      ],
+      child: const MyApp(),
+    ),
+  );
 }
 
 class MyApp extends StatelessWidget {
@@ -15,7 +37,9 @@ class MyApp extends StatelessWidget {
       title: 'PetCare',
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.lightGreen),
+        colorScheme: ColorScheme.fromSeed(
+          seedColor: Colors.lightGreen,
+        ),
         useMaterial3: true,
       ),
       routerConfig: appRouter,
