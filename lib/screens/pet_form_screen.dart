@@ -8,7 +8,12 @@ import '../data/mock_data.dart' show Pet;
 import '../models/pet_model.dart';
 
 class PetFormScreen extends StatefulWidget {
-  const PetFormScreen({super.key});
+  const PetFormScreen({
+    super.key,
+    this.petId,
+  });
+
+  final int? petId;
 
   @override
   State<PetFormScreen> createState() => _PetFormScreenState();
@@ -21,7 +26,30 @@ class _PetFormScreenState extends State<PetFormScreen> {
   final _birthDateController = TextEditingController();
 
   String? _selectedSpecies;
+  Pet? _editingPet;
+
   bool _isSaving = false;
+  bool _initialized = false;
+
+  bool get _isEditing => widget.petId != null;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+
+    if (_initialized) return;
+    _initialized = true;
+
+    if (_isEditing) {
+      _editingPet = context.read<PetModel>().byId(widget.petId!);
+
+      if (_editingPet != null) {
+        _nameController.text = _editingPet!.name;
+        _birthDateController.text = _editingPet!.birthDate;
+        _selectedSpecies = _editingPet!.species;
+      }
+    }
+  }
 
   @override
   void dispose() {
@@ -65,9 +93,7 @@ class _PetFormScreenState extends State<PetFormScreen> {
   }
 
   Future<void> _savePet() async {
-    if (_isSaving) {
-      return;
-    }
+    if (_isSaving) return;
 
     if (!_formKey.currentState!.validate()) {
       return;
@@ -78,19 +104,25 @@ class _PetFormScreenState extends State<PetFormScreen> {
     });
 
     final pet = Pet(
-      id: 0,
-      ownerId: 1,
+      id: _editingPet?.id ?? 0,
+      ownerId: _editingPet?.ownerId ?? 1,
       name: _nameController.text.trim(),
       species: _selectedSpecies!,
       birthDate: _birthDateController.text.trim(),
-      photoUrl: '',
+      photoUrl: _editingPet?.photoUrl ?? '',
     );
 
-    final error = await context.read<PetModel>().add(pet);
+    final petModel = context.read<PetModel>();
 
-    if (!mounted) {
-      return;
+    final String? error;
+
+    if (_isEditing) {
+      error = await petModel.update(pet);
+    } else {
+      error = await petModel.add(pet);
     }
+
+    if (!mounted) return;
 
     setState(() {
       _isSaving = false;
@@ -109,7 +141,9 @@ class _PetFormScreenState extends State<PetFormScreen> {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(
-          'Pet ${pet.name} added successfully!',
+          _isEditing
+              ? 'Pet ${pet.name} updated successfully!'
+              : 'Pet ${pet.name} added successfully!',
         ),
       ),
     );
@@ -119,9 +153,20 @@ class _PetFormScreenState extends State<PetFormScreen> {
 
   @override
   Widget build(BuildContext context) {
+    if (_isEditing && _editingPet == null) {
+      return Scaffold(
+        appBar: AppBar(
+          title: const Text('Pet not found'),
+        ),
+        body: const Center(
+          child: Text('This pet does not exist'),
+        ),
+      );
+    }
+
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Add Pet'),
+        title: Text(_isEditing ? 'Edit Pet' : 'Add Pet'),
       ),
       body: Form(
         key: _formKey,
@@ -130,10 +175,7 @@ class _PetFormScreenState extends State<PetFormScreen> {
           children: [
             const CircleAvatar(
               radius: 50,
-              child: Icon(
-                Icons.pets,
-                size: 50,
-              ),
+              child: Icon(Icons.pets, size: 50),
             ),
             const SizedBox(height: 16),
 
@@ -258,7 +300,11 @@ class _PetFormScreenState extends State<PetFormScreen> {
                     )
                   : const Icon(Icons.save),
               label: Text(
-                _isSaving ? 'Saving...' : 'Save Pet',
+                _isSaving
+                    ? 'Saving...'
+                    : _isEditing
+                        ? 'Update Pet'
+                        : 'Save Pet',
               ),
             ),
           ],
