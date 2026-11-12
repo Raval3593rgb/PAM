@@ -3,11 +3,12 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
-import '../data/mock_data.dart'
-    show mockVetVisits, mockVaccinations;
+import '../data/mock_data.dart' show mockVaccinations;
 import '../models/pet_model.dart';
+import '../models/vet_visit_model.dart';
 import '../widgets/pet_avatar.dart';
 import '../widgets/info_tile.dart';
+import '../widgets/error_view.dart';
 
 class PetDetailsScreen extends StatefulWidget {
   final int id;
@@ -24,9 +25,10 @@ class PetDetailsScreen extends StatefulWidget {
 
 class _PetDetailsScreenState extends State<PetDetailsScreen> {
   bool _isDeleting = false;
+  int? _deletingVisitId;
 
   Future<void> _deletePet() async {
-    if (_isDeleting) return;
+    if (_isDeleting || _deletingVisitId != null) return;
 
     final confirmed = await showDialog<bool>(
       context: context,
@@ -92,9 +94,75 @@ class _PetDetailsScreenState extends State<PetDetailsScreen> {
     context.go('/pets');
   }
 
+  Future<void> _deleteVisit(int visitId) async {
+    if (_isDeleting || _deletingVisitId != null) return;
+
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) {
+        return AlertDialog(
+          title: const Text('Delete vet visit?'),
+          content: const Text(
+            'Are you sure you want to delete this '
+            'vet visit?',
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.pop(dialogContext, false);
+              },
+              child: const Text('Cancel'),
+            ),
+            FilledButton(
+              onPressed: () {
+                Navigator.pop(dialogContext, true);
+              },
+              style: FilledButton.styleFrom(
+                backgroundColor: Colors.redAccent,
+              ),
+              child: const Text('Delete'),
+            ),
+          ],
+        );
+      },
+    );
+
+    if (confirmed != true || !mounted) return;
+
+    setState(() {
+      _deletingVisitId = visitId;
+    });
+
+    final error =
+        await context.read<VetVisitModel>().delete(visitId);
+
+    if (!mounted) return;
+
+    setState(() {
+      _deletingVisitId = null;
+    });
+
+    if (error != null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(error),
+          backgroundColor: Colors.redAccent,
+        ),
+      );
+      return;
+    }
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('Vet visit deleted successfully!'),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final pet = context.watch<PetModel>().byId(widget.id);
+    final vetVisitModel = context.watch<VetVisitModel>();
 
     if (pet == null) {
       return Scaffold(
@@ -107,9 +175,7 @@ class _PetDetailsScreenState extends State<PetDetailsScreen> {
       );
     }
 
-    final visits = mockVetVisits
-        .where((visit) => visit.petId == widget.id)
-        .toList();
+    final visits = vetVisitModel.visitsForPet(widget.id);
 
     final vaccinations = mockVaccinations
         .where(
@@ -117,28 +183,31 @@ class _PetDetailsScreenState extends State<PetDetailsScreen> {
         )
         .toList();
 
+    final isBusy =
+        _isDeleting || _deletingVisitId != null;
+
     return Scaffold(
-      
       appBar: AppBar(
         title: Text(pet.name),
         actions: [
           IconButton(
-            onPressed: _isDeleting
+            onPressed: isBusy
                 ? null
                 : () {
-                    context.push('/pets/${widget.id}/edit');
+                    context.push(
+                      '/pets/${widget.id}/edit',
+                    );
                   },
             icon: const Icon(Icons.edit_outlined),
             tooltip: 'Edit Pet',
           ),
           IconButton(
-            onPressed: _isDeleting ? null : _deletePet,
+            onPressed: isBusy ? null : _deletePet,
             icon: const Icon(Icons.delete_outline),
             tooltip: 'Delete Pet',
           ),
         ],
       ),
-
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
@@ -201,7 +270,7 @@ class _PetDetailsScreenState extends State<PetDetailsScreen> {
               IconButton(
                 icon: const Icon(Icons.add),
                 tooltip: 'Add Vet Visit',
-                onPressed: _isDeleting
+                onPressed: isBusy
                     ? null
                     : () {
                         context.push(
@@ -212,23 +281,81 @@ class _PetDetailsScreenState extends State<PetDetailsScreen> {
             ],
           ),
 
-          if (visits.isEmpty)
+          if (vetVisitModel.isLoading)
+            const Padding(
+              padding: EdgeInsets.all(24),
+              child: Center(
+                child: CircularProgressIndicator(),
+              ),
+            )
+          else if (vetVisitModel.error != null)
+            ErrorView(
+              message: vetVisitModel.error!,
+              onRetry: () {
+                context.read<VetVisitModel>().load();
+              },
+            )
+          else if (visits.isEmpty)
             const Text('No vet visits')
           else
             ...visits.map(
-              (visit) => Card(
-                child: ListTile(
-                  leading: const Icon(
-                    Icons.medical_services,
+              (visit) {
+                final isDeletingThisVisit =
+                    _deletingVisitId == visit.id;
+
+                return Card(
+                  child: ListTile(
+                    leading: const Icon(
+                      Icons.medical_services,
+                    ),
+                    title: Text(visit.reason),
+                    subtitle: Text(
+                      '${visit.date}\n'
+                      'Diagnosis: ${visit.diagnosis}\n'
+                      'Cost: ${visit.cost.toStringAsFixed(2)} MDL',
+                    ),
+                    isThreeLine: true,
+                    trailing: isDeletingThisVisit
+                        ? const SizedBox(
+                            width: 24,
+                            height: 24,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                            ),
+                          )
+                        : Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              IconButton(
+                                onPressed: isBusy
+                                    ? null
+                                    : () {
+                                        context.push(
+                                          '/pets/${widget.id}'
+                                          '/visits/${visit.id}/edit',
+                                        );
+                                      },
+                                icon: const Icon(
+                                  Icons.edit_outlined,
+                                ),
+                                tooltip: 'Edit Visit',
+                              ),
+                              IconButton(
+                                onPressed: isBusy
+                                    ? null
+                                    : () {
+                                        _deleteVisit(visit.id);
+                                      },
+                                icon: const Icon(
+                                  Icons.delete_outline,
+                                ),
+                                tooltip: 'Delete Visit',
+                              ),
+                            ],
+                          ),
                   ),
-                  title: Text(visit.reason),
-                  subtitle: Text(
-                    '${visit.date}\n'
-                    'Diagnosis: ${visit.diagnosis}\n'
-                    'Cost: ${visit.cost.toStringAsFixed(2)} MDL',
-                  ),
-                ),
-              ),
+                );
+              },
             ),
 
           const SizedBox(height: 24),

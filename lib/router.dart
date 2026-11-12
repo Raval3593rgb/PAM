@@ -72,8 +72,48 @@ final GoRouter appRouter = GoRouter(
                     ),
                     GoRoute(
                       path: 'visits/new',
-                      builder: (context, state) =>
-                          const VetVisitFormScreen(),
+                      builder: (context, state) {
+                        final petId = int.tryParse(
+                          state.pathParameters['id'] ?? '',
+                        );
+
+                        if (petId == null) {
+                          return const Scaffold(
+                            body: Center(
+                              child: Text('Invalid pet ID'),
+                            ),
+                          );
+                        }
+
+                        return VetVisitFormScreen(
+                          petId: petId,
+                        );
+                      },
+                    ),
+                    GoRoute(
+                      path: 'visits/:visitId/edit',
+                      builder: (context, state) {
+                        final petId = int.tryParse(
+                          state.pathParameters['id'] ?? '',
+                        );
+
+                        final visitId = int.tryParse(
+                          state.pathParameters['visitId'] ?? '',
+                        );
+
+                        if (petId == null || visitId == null) {
+                          return const Scaffold(
+                            body: Center(
+                              child: Text('Invalid visit ID'),
+                            ),
+                          );
+                        }
+
+                        return VetVisitFormScreen(
+                          petId: petId,
+                          visitId: visitId,
+                        );
+                      },
                     ),
                   ],
                 ),
