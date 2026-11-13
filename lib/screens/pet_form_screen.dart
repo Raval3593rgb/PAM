@@ -4,7 +4,7 @@ import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
-import '../data/mock_data.dart' show Pet;
+import '../models/pet.dart';
 import '../models/pet_model.dart';
 
 class PetFormScreen extends StatefulWidget {

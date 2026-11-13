@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
-import '../data/mock_data.dart' show mockVaccinations;
+import '../models/vaccination_model.dart';
 import '../models/pet_model.dart';
 import '../models/vet_visit_model.dart';
 import '../widgets/pet_avatar.dart';
@@ -161,8 +161,9 @@ class _PetDetailsScreenState extends State<PetDetailsScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final pet = context.watch<PetModel>().byId(widget.id);
-    final vetVisitModel = context.watch<VetVisitModel>();
+final pet = context.watch<PetModel>().byId(widget.id);
+final vetVisitModel = context.watch<VetVisitModel>();
+final vaccinationModel = context.watch<VaccinationModel>();
 
     if (pet == null) {
       return Scaffold(
@@ -177,11 +178,8 @@ class _PetDetailsScreenState extends State<PetDetailsScreen> {
 
     final visits = vetVisitModel.visitsForPet(widget.id);
 
-    final vaccinations = mockVaccinations
-        .where(
-          (vaccination) => vaccination.petId == widget.id,
-        )
-        .toList();
+    final vaccinations =
+    vaccinationModel.vaccinationsForPet(widget.id);
 
     final isBusy =
         _isDeleting || _deletingVisitId != null;
@@ -369,21 +367,35 @@ class _PetDetailsScreenState extends State<PetDetailsScreen> {
 
           const SizedBox(height: 8),
 
-          if (vaccinations.isEmpty)
-            const Text('No vaccinations')
-          else
-            ...vaccinations.map(
-              (vaccination) => Card(
-                child: ListTile(
-                  leading: const Icon(Icons.vaccines),
-                  title: Text(vaccination.name),
-                  subtitle: Text(
-                    'Date: ${vaccination.date}\n'
-                    'Next due: ${vaccination.nextDueDate}',
-                  ),
+if (vaccinationModel.isLoading)
+  const Padding(
+    padding: EdgeInsets.all(24),
+    child: Center(
+      child: CircularProgressIndicator(),
+    ),
+  )
+      else if (vaccinationModel.error != null)
+        ErrorView(
+          message: vaccinationModel.error!,
+          onRetry: () {
+            context.read<VaccinationModel>().load();
+          },
+        )
+        else if (vaccinations.isEmpty)
+          const Text('No vaccinations')
+        else
+          ...vaccinations.map(
+            (vaccination) => Card(
+              child: ListTile(
+                leading: const Icon(Icons.vaccines),
+                title: Text(vaccination.name),
+                subtitle: Text(
+                  'Date: ${vaccination.date}\n'
+                  'Next due: ${vaccination.nextDueDate}',
                 ),
               ),
             ),
+          ),
         ],
       ),
     );

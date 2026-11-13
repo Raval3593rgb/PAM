@@ -1,7 +1,7 @@
 
 import 'package:flutter/foundation.dart';
 
-import '../data/mock_data.dart' show Pet;
+import 'pet.dart';
 import '../data/repositories/pet_repository.dart';
 import '../data/result.dart';
 

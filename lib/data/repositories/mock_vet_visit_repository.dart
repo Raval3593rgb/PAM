@@ -1,5 +1,5 @@
-
-import '../mock_data.dart';
+import '../../models/vet_visit.dart';
+import '../mock_data.dart' show mockVetVisits;
 import '../result.dart';
 import 'vet_visit_repository.dart';
 

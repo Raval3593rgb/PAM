@@ -1,55 +1,11 @@
-class Pet{
-  final int id;
-  final int ownerId;
-  final String name;
-  final String species;
-  final String birthDate;
-  final String photoUrl;
 
-  const Pet({
-    required this.id,
-    required this.ownerId,
-    required this.name,
-    required this.species,
-    required this.birthDate,
-    required this.photoUrl,
-  });
-}
+import '../models/pet.dart';
+import '../models/vet_visit.dart';
+import '../models/vaccination.dart';
 
-class VetVisit{
-  final int id;
-  final int petId;
-  final String date;
-  final String reason;
-  final String diagnosis;
-  final double cost;
-
-  const VetVisit({
-    required this.id,
-    required this.petId,
-    required this.date,
-    required this.reason,
-    required this.diagnosis,
-    required this.cost,
-  });
-}
-
-
-class Vaccination{
-  final int id;
-  final int petId;
-  final String name;
-  final String date;
-  final String nextDueDate;
-
-  const Vaccination({
-    required this.id,
-    required this.petId,
-    required this.name,
-    required this.date,
-    required this.nextDueDate,
-  });
-}
+export '../models/pet.dart';
+export '../models/vet_visit.dart';
+export '../models/vaccination.dart';
 
 const mockPets = [
   Pet(

@@ -4,7 +4,7 @@ import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
-import '../data/mock_data.dart' show VetVisit;
+import '../models/vet_visit.dart';
 import '../models/vet_visit_model.dart';
 
 class VetVisitFormScreen extends StatefulWidget {

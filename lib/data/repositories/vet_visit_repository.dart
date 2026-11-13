@@ -1,5 +1,5 @@
 
-import '../mock_data.dart' show VetVisit;
+import '../../models/vet_visit.dart';
 import '../result.dart';
 
 abstract class VetVisitRepository {

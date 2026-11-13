@@ -1,5 +1,5 @@
-
-import '../mock_data.dart';
+import '../../models/pet.dart';
+import '../mock_data.dart' show mockPets;
 import '../result.dart';
 import 'pet_repository.dart';
 

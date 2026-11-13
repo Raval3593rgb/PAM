@@ -4,16 +4,23 @@ import 'package:provider/provider.dart';
 
 import 'data/repositories/mock_pet_repository.dart';
 import 'data/repositories/pet_repository.dart';
+
 import 'data/repositories/mock_vet_visit_repository.dart';
 import 'data/repositories/vet_visit_repository.dart';
 
+import 'data/repositories/mock_vaccination_repository.dart';
+import 'data/repositories/vaccination_repository.dart';
+
 import 'models/pet_model.dart';
 import 'models/vet_visit_model.dart';
+import 'models/vaccination_model.dart';
+
 import 'router.dart';
 
 void main() {
   final petRepository = MockPetRepository();
   final vetVisitRepository = MockVetVisitRepository();
+  final vaccinationRepository = MockVaccinationRepository();
 
   runApp(
     MultiProvider(
@@ -34,6 +41,14 @@ void main() {
           value: vetVisitRepository,
         ),
 
+        // Vaccination Repository
+        Provider<MockVaccinationRepository>.value(
+          value: vaccinationRepository,
+        ),
+        Provider<VaccinationRepository>.value(
+          value: vaccinationRepository,
+        ),
+
         // Pet State Management
         ChangeNotifierProvider<PetModel>(
           create: (_) => PetModel(petRepository)..load(),
@@ -43,6 +58,12 @@ void main() {
         ChangeNotifierProvider<VetVisitModel>(
           create: (_) =>
               VetVisitModel(vetVisitRepository)..load(),
+        ),
+
+        // Vaccination State Management
+        ChangeNotifierProvider<VaccinationModel>(
+          create: (_) =>
+              VaccinationModel(vaccinationRepository)..load(),
         ),
       ],
       child: const MyApp(),

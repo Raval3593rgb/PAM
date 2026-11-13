@@ -1,5 +1,5 @@
 
-import '../mock_data.dart' show Pet;
+import '../../models/pet.dart';
 import '../result.dart';
 
 abstract class PetRepository {

@@ -1,7 +1,7 @@
 
 import 'package:flutter/foundation.dart';
 
-import '../data/mock_data.dart' show VetVisit;
+import 'vet_visit.dart';
 import '../data/repositories/vet_visit_repository.dart';
 import '../data/result.dart';
 
