@@ -1,30 +1,48 @@
-// This is a basic Flutter widget test.
-//
-// To perform an interaction with a widget in your test, use the WidgetTester
-// utility in the flutter_test package. For example, you can send tap and scroll
-// gestures. You can also use WidgetTester to find child widgets in the widget
-// tree, read text, and verify that the values of widget properties are correct.
 
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:provider/provider.dart';
 
-import 'package:petcare/main.dart';
+import '../lib/data/repositories/mock_pet_repository.dart';
+import '../lib/models/pet_model.dart';
+import '../lib/screens/pet_screen.dart';
 
 void main() {
-  testWidgets('Counter increments smoke test', (WidgetTester tester) async {
-    // Build our app and trigger a frame.
-    await tester.pumpWidget(const MyApp());
+  testWidgets(
+    'PetCare loads pets from repository',
+    (WidgetTester tester) async {
+      final repository = MockPetRepository();
+      final petModel = PetModel(repository);
 
-    // Verify that our counter starts at 0.
-    expect(find.text('0'), findsOneWidget);
-    expect(find.text('1'), findsNothing);
+      await tester.pumpWidget(
+        ChangeNotifierProvider<PetModel>.value(
+          value: petModel,
+          child: const MaterialApp(
+            home: PetsScreen(),
+          ),
+        ),
+      );
 
-    // Tap the '+' icon and trigger a frame.
-    await tester.tap(find.byIcon(Icons.add));
-    await tester.pump();
+      // Start loading pets from MockRepository.
+      petModel.load();
 
-    // Verify that our counter has incremented.
-    expect(find.text('0'), findsNothing);
-    expect(find.text('1'), findsOneWidget);
-  });
+      await tester.pump();
+
+      // Check loading state.
+      expect(
+        find.byType(CircularProgressIndicator),
+        findsOneWidget,
+      );
+
+      // Simulate repository delay (800 ms).
+      await tester.pump(
+        const Duration(milliseconds: 900),
+      );
+      await tester.pump();
+
+      // Check loaded pets.
+      expect(find.text('Barsik'), findsOneWidget);
+      expect(find.text('6'), findsOneWidget);
+    },
+  );
 }
