@@ -16,8 +16,27 @@ import 'models/vet_visit_model.dart';
 import 'models/vaccination_model.dart';
 
 import 'router.dart';
+import 'data/auth_api.dart';
+import 'data/token_store.dart';
 
-void main() {
+
+Future<void> main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+
+  // Адрес нашего FastAPI
+  const apiBaseUrl = String.fromEnvironment(
+    'API_BASE_URL',
+    defaultValue: 'http://10.0.2.2:8080',
+  );
+
+  // Проверяем сохранённый JWT
+  final tokens = TokenStore();
+  final loggedIn = await tokens.read() != null;
+
+  // Настраиваем начальный экран
+  initializeRouter(loggedIn: loggedIn);
+
+  // Пока оставляем Mock Repository из L4
   final petRepository = MockPetRepository();
   final vetVisitRepository = MockVetVisitRepository();
   final vaccinationRepository = MockVaccinationRepository();
@@ -25,6 +44,15 @@ void main() {
   runApp(
     MultiProvider(
       providers: [
+        // Настоящая авторизация FastAPI
+        Provider<TokenStore>.value(
+          value: tokens,
+        ),
+
+        Provider<AuthApi>(
+          create: (_) => AuthApi(apiBaseUrl, tokens),
+        ),
+
         // Pet Repository
         Provider<MockPetRepository>.value(
           value: petRepository,
@@ -70,6 +98,7 @@ void main() {
     ),
   );
 }
+
 
 class MyApp extends StatelessWidget {
   const MyApp({super.key});

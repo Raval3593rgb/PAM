@@ -11,9 +11,12 @@ import 'screens/vaccination_calendar_screen.dart';
 import 'screens/profile_screen.dart';
 import 'widgets/app_shell.dart';
 
-final GoRouter appRouter = GoRouter(
-  initialLocation: '/login',
-  routes: [
+late final GoRouter appRouter;
+
+void initializeRouter({required bool loggedIn}) {
+  appRouter = GoRouter(
+    initialLocation: loggedIn ? '/pets' : '/login',
+    routes: [
     GoRoute(
       path: '/login',
       builder: (context, state) => const LoginScreen(),
@@ -143,3 +146,4 @@ final GoRouter appRouter = GoRouter(
     ),
   ],
 );
+}

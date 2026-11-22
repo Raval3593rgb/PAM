@@ -5,6 +5,7 @@ import 'package:provider/provider.dart';
 
 import '../data/repositories/mock_pet_repository.dart';
 import '../models/pet_model.dart';
+import '../data/auth_api.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -44,7 +45,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
 
     if (shouldLogout == true && context.mounted) {
-      context.go('/login');
+  // Удаляем сохранённый JWT-токен
+  await context.read<AuthApi>().logout();
+
+  if (!context.mounted) return;
+
+  // Возвращаем пользователя на экран входа
+  context.go('/login');
     }
   }
 
