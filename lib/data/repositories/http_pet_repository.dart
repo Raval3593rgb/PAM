@@ -1,4 +1,3 @@
-
 import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
@@ -62,30 +61,38 @@ class HttpPetRepository implements PetRepository {
 
       // Успешный ответ
       return Ok(decode(response));
-
     } on SocketException {
       return const Err('Нет сети — повторите попытку');
-
     } on TimeoutException {
       return const Err('Сервер не отвечает');
-
     } on http.ClientException {
       return const Err('Ошибка соединения с сервером');
-
     } on FormatException {
       return const Err('Некорректный ответ сервера');
-
     } on TypeError {
       return const Err('Некорректный ответ сервера');
     }
   }
 
-  // GET /pets — получить список питомцев
+  // GET /pets — получить список питомцев с пагинацией и поиском
   @override
-  Future<Result<List<Pet>>> fetchAll() {
+  Future<Result<List<Pet>>> fetchAll({
+    int page = 1,
+    int limit = 20,
+    String? search,
+  }) async {
+    final uri = Uri.parse('$baseUrl/pets').replace(
+      queryParameters: {
+        'page': '$page',
+        'limit': '$limit',
+        if (search != null && search.trim().isNotEmpty)
+          'search': search.trim(),
+      },
+    );
+
     return _execute<List<Pet>>(
       () async => http.get(
-        Uri.parse('$baseUrl/pets'),
+        uri,
         headers: await _headers(),
       ),
       200,

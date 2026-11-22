@@ -2,7 +2,11 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
+import 'package:image_picker/image_picker.dart';
 
+import '../data/file_api.dart';
+import '../data/result.dart';
+import '../models/pet.dart';
 import '../models/vaccination_model.dart';
 import '../models/pet_model.dart';
 import '../models/vet_visit_model.dart';
@@ -26,11 +30,12 @@ class PetDetailsScreen extends StatefulWidget {
 
 class _PetDetailsScreenState extends State<PetDetailsScreen> {
   bool _isDeleting = false;
+  bool _uploadingPhoto = false;
   int? _deletingVisitId;
   int? _deletingVaccinationId;
 
   Future<void> _deletePet() async {
-    if (_isDeleting || _deletingVisitId != null || _deletingVaccinationId != null) return;
+    if (_isDeleting || _uploadingPhoto || _deletingVisitId != null || _deletingVaccinationId != null) return;
 
     final confirmed = await showDialog<bool>(
       context: context,
@@ -97,7 +102,7 @@ class _PetDetailsScreenState extends State<PetDetailsScreen> {
   }
 
   Future<void> _deleteVisit(int visitId) async {
-    if (_isDeleting || _deletingVisitId != null || _deletingVaccinationId != null) return;
+    if (_isDeleting || _uploadingPhoto || _deletingVisitId != null || _deletingVaccinationId != null) return;
 
     final confirmed = await showDialog<bool>(
       context: context,
@@ -163,6 +168,7 @@ class _PetDetailsScreenState extends State<PetDetailsScreen> {
 
   Future<void> _deleteVaccination(int vaccinationId) async {
     if (_isDeleting ||
+        _uploadingPhoto ||
         _deletingVisitId != null ||
         _deletingVaccinationId != null) {
       return;
@@ -211,6 +217,68 @@ class _PetDetailsScreenState extends State<PetDetailsScreen> {
     );
   }
 
+  // Gallery -> POST /files -> PUT /pets/{id} -> refresh in PetModel.
+  Future<void> _changePhoto(Pet pet) async {
+    if (_isDeleting ||
+        _uploadingPhoto ||
+        _deletingVisitId != null ||
+        _deletingVaccinationId != null) {
+      return;
+    }
+
+    try {
+      final selected = await ImagePicker().pickImage(
+        source: ImageSource.gallery,
+        imageQuality: 80,
+        maxWidth: 1200,
+      );
+      if (selected == null || !mounted) return;
+
+      setState(() => _uploadingPhoto = true);
+
+      final uploaded = await context.read<FileApi>().upload(selected.path);
+      if (!mounted) return;
+
+      switch (uploaded) {
+        case Ok<String>(:final value):
+          // Copy the existing pet, changing only photoUrl.
+          final updatedPet = Pet.fromJson({
+            'id': pet.id,
+            'ownerId': pet.ownerId,
+            'name': pet.name,
+            'species': pet.species,
+            'birthDate': pet.birthDate,
+            'photoUrl': value,
+          });
+
+          final error = await context.read<PetModel>().update(updatedPet);
+          if (!mounted) return;
+
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(error ?? 'Photo updated successfully!'),
+              backgroundColor: error == null ? null : Colors.redAccent,
+            ),
+          );
+
+        case Err<String>(:final msg):
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(msg),
+              backgroundColor: Colors.redAccent,
+            ),
+          );
+      }
+    } catch (_) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Could not select a photo')),
+      );
+    } finally {
+      if (mounted) setState(() => _uploadingPhoto = false);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final pet = context.watch<PetModel>().byId(widget.id);
@@ -233,8 +301,16 @@ class _PetDetailsScreenState extends State<PetDetailsScreen> {
     final vaccinations = vaccinationModel.vaccinationsForPet(widget.id);
 
     final isBusy = _isDeleting ||
+        _uploadingPhoto ||
         _deletingVisitId != null ||
         _deletingVaccinationId != null;
+
+    final photoPath = pet.photoUrl.trim();
+    final imageUrl = photoPath.isEmpty
+        ? null
+        : Uri.parse(context.read<FileApi>().baseUrl)
+            .resolve(photoPath)
+            .toString();
 
     return Scaffold(
       appBar: AppBar(
@@ -261,8 +337,42 @@ class _PetDetailsScreenState extends State<PetDetailsScreen> {
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
-          const Center(
-            child: PetAvatar(radius: 50),
+          Center(
+            child: SizedBox(
+              width: 120,
+              height: 120,
+              child: Stack(
+                children: [
+                  Positioned.fill(
+                    child: ClipOval(
+                      child: imageUrl == null
+                          ? const Center(child: PetAvatar(radius: 50))
+                          : Image.network(
+                              imageUrl,
+                              fit: BoxFit.cover,
+                              errorBuilder: (_, _, _) =>
+                                  const Center(child: PetAvatar(radius: 50)),
+                            ),
+                    ),
+                  ),
+                  Positioned(
+                    right: 0,
+                    bottom: 0,
+                    child: IconButton.filled(
+                      tooltip: 'Change Photo',
+                      onPressed: isBusy ? null : () => _changePhoto(pet),
+                      icon: _uploadingPhoto
+                          ? const SizedBox(
+                              width: 18,
+                              height: 18,
+                              child: CircularProgressIndicator(strokeWidth: 2),
+                            )
+                          : const Icon(Icons.camera_alt),
+                    ),
+                  ),
+                ],
+              ),
+            ),
           ),
           const SizedBox(height: 16),
 

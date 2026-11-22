@@ -5,6 +5,8 @@ import 'package:provider/provider.dart';
 import 'data/auth_api.dart';
 import 'data/token_store.dart';
 
+import 'data/file_api.dart';
+
 import 'data/repositories/pet_repository.dart';
 import 'data/repositories/vet_visit_repository.dart';
 import 'data/repositories/vaccination_repository.dart';
@@ -63,6 +65,14 @@ Future<void> main() async {
       providers: [
         // Авторизация
         Provider<TokenStore>.value(value: tokens),
+
+        Provider<FileApi>(
+          create: (_) => FileApi(
+            apiBaseUrl,
+            tokens,
+            onUnauthorized: onUnauthorized,
+          ),
+        ),
 
         Provider<AuthApi>(
           create: (_) => AuthApi(apiBaseUrl, tokens),
