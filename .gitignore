@@ -46,3 +46,11 @@ app.*.map.json
 
 # Widget Preview related
 .widget_preview/
+
+# Python + FastAPI Backend (Lab 5)
+server/.venv/
+server/app.db
+server/uploads/
+__pycache__/
+*.pyo
+.pytest_cache/
