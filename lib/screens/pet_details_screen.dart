@@ -9,6 +9,7 @@ import '../models/vet_visit_model.dart';
 import '../widgets/pet_avatar.dart';
 import '../widgets/info_tile.dart';
 import '../widgets/error_view.dart';
+import 'vaccination_form_screen.dart';
 
 class PetDetailsScreen extends StatefulWidget {
   final int id;
@@ -26,9 +27,10 @@ class PetDetailsScreen extends StatefulWidget {
 class _PetDetailsScreenState extends State<PetDetailsScreen> {
   bool _isDeleting = false;
   int? _deletingVisitId;
+  int? _deletingVaccinationId;
 
   Future<void> _deletePet() async {
-    if (_isDeleting || _deletingVisitId != null) return;
+    if (_isDeleting || _deletingVisitId != null || _deletingVaccinationId != null) return;
 
     final confirmed = await showDialog<bool>(
       context: context,
@@ -95,7 +97,7 @@ class _PetDetailsScreenState extends State<PetDetailsScreen> {
   }
 
   Future<void> _deleteVisit(int visitId) async {
-    if (_isDeleting || _deletingVisitId != null) return;
+    if (_isDeleting || _deletingVisitId != null || _deletingVaccinationId != null) return;
 
     final confirmed = await showDialog<bool>(
       context: context,
@@ -159,11 +161,61 @@ class _PetDetailsScreenState extends State<PetDetailsScreen> {
     );
   }
 
+  Future<void> _deleteVaccination(int vaccinationId) async {
+    if (_isDeleting ||
+        _deletingVisitId != null ||
+        _deletingVaccinationId != null) {
+      return;
+    }
+
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('Delete vaccination?'),
+        content: const Text(
+          'Are you sure you want to delete this vaccination? '
+          'This action cannot be undone.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext, false),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(dialogContext, true),
+            style: FilledButton.styleFrom(
+              backgroundColor: Colors.redAccent,
+            ),
+            child: const Text('Delete'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed != true || !mounted) return;
+
+    setState(() => _deletingVaccinationId = vaccinationId);
+
+    final error =
+        await context.read<VaccinationModel>().delete(vaccinationId);
+
+    if (!mounted) return;
+
+    setState(() => _deletingVaccinationId = null);
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(error ?? 'Vaccination deleted successfully!'),
+        backgroundColor: error == null ? null : Colors.redAccent,
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
-final pet = context.watch<PetModel>().byId(widget.id);
-final vetVisitModel = context.watch<VetVisitModel>();
-final vaccinationModel = context.watch<VaccinationModel>();
+    final pet = context.watch<PetModel>().byId(widget.id);
+    final vetVisitModel = context.watch<VetVisitModel>();
+    final vaccinationModel = context.watch<VaccinationModel>();
 
     if (pet == null) {
       return Scaffold(
@@ -178,11 +230,11 @@ final vaccinationModel = context.watch<VaccinationModel>();
 
     final visits = vetVisitModel.visitsForPet(widget.id);
 
-    final vaccinations =
-    vaccinationModel.vaccinationsForPet(widget.id);
+    final vaccinations = vaccinationModel.vaccinationsForPet(widget.id);
 
-    final isBusy =
-        _isDeleting || _deletingVisitId != null;
+    final isBusy = _isDeleting ||
+        _deletingVisitId != null ||
+        _deletingVaccinationId != null;
 
     return Scaffold(
       appBar: AppBar(
@@ -358,44 +410,100 @@ final vaccinationModel = context.watch<VaccinationModel>();
 
           const SizedBox(height: 24),
 
-          Text(
-            'Vaccinations',
-            style: Theme.of(context)
-                .textTheme
-                .titleLarge,
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                'Vaccinations',
+                style: Theme.of(context).textTheme.titleLarge,
+              ),
+              IconButton(
+                icon: const Icon(Icons.add),
+                tooltip: 'Add Vaccination',
+                onPressed: isBusy
+                    ? null
+                    : () {
+                        Navigator.of(context).push(
+                          MaterialPageRoute<void>(
+                            builder: (_) => VaccinationFormScreen(
+                              petId: widget.id,
+                            ),
+                          ),
+                        );
+                      },
+              ),
+            ],
           ),
 
           const SizedBox(height: 8),
 
-if (vaccinationModel.isLoading)
-  const Padding(
-    padding: EdgeInsets.all(24),
-    child: Center(
-      child: CircularProgressIndicator(),
-    ),
-  )
-      else if (vaccinationModel.error != null)
-        ErrorView(
-          message: vaccinationModel.error!,
-          onRetry: () {
-            context.read<VaccinationModel>().load();
-          },
-        )
-        else if (vaccinations.isEmpty)
-          const Text('No vaccinations')
-        else
-          ...vaccinations.map(
-            (vaccination) => Card(
-              child: ListTile(
-                leading: const Icon(Icons.vaccines),
-                title: Text(vaccination.name),
-                subtitle: Text(
-                  'Date: ${vaccination.date}\n'
-                  'Next due: ${vaccination.nextDueDate}',
-                ),
+          if (vaccinationModel.isLoading)
+            const Padding(
+              padding: EdgeInsets.all(24),
+              child: Center(
+                child: CircularProgressIndicator(),
               ),
-            ),
-          ),
+            )
+          else if (vaccinationModel.error != null)
+            ErrorView(
+              message: vaccinationModel.error!,
+              onRetry: () {
+                context.read<VaccinationModel>().load();
+              },
+            )
+          else if (vaccinations.isEmpty)
+            const Text('No vaccinations')
+          else
+            ...vaccinations.map((vaccination) {
+              final isDeletingThisVaccination =
+                  _deletingVaccinationId == vaccination.id;
+
+              return Card(
+                child: ListTile(
+                  leading: const Icon(Icons.vaccines),
+                  title: Text(vaccination.name),
+                  subtitle: Text(
+                    'Date: ${vaccination.date}\n'
+                    'Next due: ${vaccination.nextDueDate}',
+                  ),
+                  isThreeLine: true,
+                  trailing: isDeletingThisVaccination
+                      ? const SizedBox(
+                          width: 24,
+                          height: 24,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        )
+                      : Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            IconButton(
+                              tooltip: 'Edit Vaccination',
+                              icon: const Icon(Icons.edit_outlined),
+                              onPressed: isBusy
+                                  ? null
+                                  : () {
+                                      Navigator.of(context).push(
+                                        MaterialPageRoute<void>(
+                                          builder: (_) => VaccinationFormScreen(
+                                            petId: widget.id,
+                                            existing: vaccination,
+                                          ),
+                                        ),
+                                      );
+                                    },
+                            ),
+                            IconButton(
+                              tooltip: 'Delete Vaccination',
+                              icon: const Icon(Icons.delete_outline),
+                              onPressed: isBusy
+                                  ? null
+                                  : () => _deleteVaccination(vaccination.id),
+                            ),
+                          ],
+                        ),
+                ),
+              );
+            }),
         ],
       ),
     );

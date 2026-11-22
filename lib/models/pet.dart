@@ -15,4 +15,26 @@ class Pet {
     required this.birthDate,
     required this.photoUrl,
   });
+
+  // JSON от FastAPI -> объект Pet
+  factory Pet.fromJson(Map<String, dynamic> json) {
+    return Pet(
+      id: json['id'] as int,
+      ownerId: json['ownerId'] as int,
+      name: json['name'] as String,
+      species: json['species'] as String,
+      birthDate: json['birthDate'] as String? ?? '',
+      photoUrl: json['photoUrl'] as String? ?? '',
+    );
+  }
+
+  // Объект Pet -> JSON для FastAPI
+  Map<String, dynamic> toJson() {
+    return {
+      'name': name,
+      'species': species,
+      'birthDate': birthDate,
+      'photoUrl': photoUrl,
+    };
+  }
 }

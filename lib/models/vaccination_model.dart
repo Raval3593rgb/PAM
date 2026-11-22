@@ -48,4 +48,31 @@ class VaccinationModel extends ChangeNotifier {
     _isLoading = false;
     notifyListeners();
   }
+
+
+  Future<String?> update(Vaccination vaccination) async {
+    final result = await _repository.update(vaccination);
+
+    switch (result) {
+      case Ok():
+        await load();
+        return null;
+
+      case Err(:final msg):
+        return msg;
+    }
+  }
+
+  Future<String?> delete(int id) async {
+    final result = await _repository.delete(id);
+
+    switch (result) {
+      case Ok():
+        await load();
+        return null;
+
+      case Err(:final msg):
+        return msg;
+    }
+  }
 }

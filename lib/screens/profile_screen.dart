@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
-import '../data/repositories/mock_pet_repository.dart';
 import '../models/pet_model.dart';
 import '../data/auth_api.dart';
 
@@ -15,8 +14,6 @@ class ProfileScreen extends StatefulWidget {
 }
 
 class _ProfileScreenState extends State<ProfileScreen> {
-  bool _simulateError = false;
-
   Future<void> _confirmLogout(BuildContext context) async {
     final shouldLogout = await showDialog<bool>(
       context: context,
@@ -45,13 +42,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
 
     if (shouldLogout == true && context.mounted) {
-  // Удаляем сохранённый JWT-токен
-  await context.read<AuthApi>().logout();
+      // Удаляем JWT-токен
+      await context.read<AuthApi>().logout();
 
-  if (!context.mounted) return;
+      if (!context.mounted) return;
 
-  // Возвращаем пользователя на экран входа
-  context.go('/login');
+      // Возвращаемся на экран авторизации
+      context.go('/login');
     }
   }
 
@@ -112,28 +109,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 '${petModel.pets.length}',
                 style: Theme.of(context).textTheme.titleLarge,
               ),
-            ),
-          ),
-
-          const SizedBox(height: 16),
-
-          Card(
-            child: SwitchListTile(
-              secondary: const Icon(Icons.wifi_off),
-              title: const Text('Simulate Network Error'),
-              subtitle: const Text(
-                'Test repository error handling',
-              ),
-              value: _simulateError,
-              onChanged: (value) {
-                setState(() {
-                  _simulateError = value;
-                });
-
-                context
-                    .read<MockPetRepository>()
-                    .simulateError = value;
-              },
             ),
           ),
 

@@ -1,48 +1,47 @@
 
-import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:provider/provider.dart';
-
-import '../lib/data/repositories/mock_pet_repository.dart';
-import '../lib/models/pet_model.dart';
-import '../lib/screens/pet_screen.dart';
+import 'package:petcare/models/pet.dart';
+import 'package:petcare/data/result.dart';
 
 void main() {
-  testWidgets(
-    'PetCare loads pets from repository',
-    (WidgetTester tester) async {
-      final repository = MockPetRepository();
-      final petModel = PetModel(repository);
+  test('Pet.fromJson parses backend response', () {
+    final pet = Pet.fromJson({
+      'id': 4,
+      'ownerId': 2,
+      'name': 'Barsik',
+      'species': 'Cat',
+      'birthDate': '2024-06-15',
+      'photoUrl': '',
+    });
 
-      await tester.pumpWidget(
-        ChangeNotifierProvider<PetModel>.value(
-          value: petModel,
-          child: const MaterialApp(
-            home: PetsScreen(),
-          ),
-        ),
-      );
+    expect(pet.id, 4);
+    expect(pet.ownerId, 2);
+    expect(pet.name, 'Barsik');
+    expect(pet.species, 'Cat');
+  });
 
-      // Start loading pets from MockRepository.
-      petModel.load();
+  test('Pet.toJson creates correct API payload', () {
+    final pet = Pet.fromJson({
+      'id': 4,
+      'ownerId': 2,
+      'name': 'Barsik',
+      'species': 'Cat',
+      'birthDate': '2024-06-15',
+      'photoUrl': '',
+    });
 
-      await tester.pump();
+    final json = pet.toJson();
 
-      // Check loading state.
-      expect(
-        find.byType(CircularProgressIndicator),
-        findsOneWidget,
-      );
+    expect(json['name'], 'Barsik');
+    expect(json['species'], 'Cat');
+    expect(json['birthDate'], '2024-06-15');
+  });
 
-      // Simulate repository delay (800 ms).
-      await tester.pump(
-        const Duration(milliseconds: 900),
-      );
-      await tester.pump();
+  test('Result handles success and errors', () {
+    const success = Ok<String>('Success');
+    const failure = Err<String>('Network error');
 
-      // Check loaded pets.
-      expect(find.text('Barsik'), findsOneWidget);
-      expect(find.text('6'), findsOneWidget);
-    },
-  );
+    expect(success.value, 'Success');
+    expect(failure.msg, 'Network error');
+  });
 }
