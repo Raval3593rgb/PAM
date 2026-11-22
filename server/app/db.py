@@ -38,6 +38,29 @@ CREATE TABLE IF NOT EXISTS pets (
   created_at  TEXT NOT NULL
 );
 
+CREATE TABLE IF NOT EXISTS vaccinations (
+    id            INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id       INTEGER NOT NULL REFERENCES users(id),
+    pet_id        INTEGER NOT NULL REFERENCES pets(id),
+    name          TEXT NOT NULL,
+    date          TEXT NOT NULL,
+    next_due_date TEXT NOT NULL,
+    created_at    TEXT NOT NULL
+);
+
+
+CREATE TABLE IF NOT EXISTS vet_visits (
+    id         INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id    INTEGER NOT NULL REFERENCES users(id),
+    pet_id     INTEGER NOT NULL REFERENCES pets(id),
+    date       TEXT NOT NULL,
+    reason     TEXT NOT NULL,
+    diagnosis  TEXT NOT NULL DEFAULT '',
+    cost       REAL NOT NULL DEFAULT 0,
+    created_at TEXT NOT NULL
+);
+
+
 
 CREATE TABLE IF NOT EXISTS files (
   id         INTEGER PRIMARY KEY AUTOINCREMENT,
